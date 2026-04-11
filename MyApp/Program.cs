@@ -35,7 +35,7 @@ services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AdditionalUserClaimsPrincipalFactory>();
 
 // Register all services
-services.AddServiceStack(typeof(MyServices).Assembly);
+services.AddServiceStack(typeof(AppConfig).Assembly);
 
 var app = builder.Build();
 var nodeProxy = new NodeProxy("http://127.0.0.1:5173") {

@@ -24,10 +24,7 @@ export default () => {
             <div className="pb-6">
                 <TextLink href="/about" className={navClass("/about")}>About</TextLink>
             </div>
-            <div className="pb-6">
-                <TextLink href="/posts" className={navClass("/posts")}>Archive</TextLink>
-            </div>
-            <div className="pb-6">
+<div className="pb-6">
                 <TextLink href="/privacy" className={navClass("/privacy")}>Privacy</TextLink>
             </div>
         </nav>

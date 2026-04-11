@@ -25,24 +25,6 @@ export default () => {
                         <li className="relative flex flex-wrap just-fu-start m-0">
                             <NavLink to="/shadcn-ui" className={navClass}>shadcn/ui</NavLink>
                         </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/counter" className={navClass}>Counter</NavLink>
-                        </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/weather" className={navClass}>Weather</NavLink>
-                        </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/todomvc" className={navClass}>Todos</NavLink>
-                        </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/bookings-auto" className={navClass}>Bookings</NavLink>
-                        </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/blog" className={navClass}>Blog</NavLink>
-                        </li>
-                        <li className="relative flex flex-wrap just-fu-start m-0">
-                            <NavLink to="/videos" className={navClass}>Videos</NavLink>
-                        </li>
                         {user
                             ? (<>
                                 {hasRole('Admin')

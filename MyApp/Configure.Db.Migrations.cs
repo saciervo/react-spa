@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyApp.Data;
-using MyApp.Migrations;
 using ServiceStack;
 using ServiceStack.Data;
 using ServiceStack.OrmLite;
@@ -15,7 +14,7 @@ public class ConfigureDbMigrations : IHostingStartup
 {
     public void Configure(IWebHostBuilder builder) => builder
         .ConfigureAppHost(appHost => {
-            var migrator = new Migrator(appHost.Resolve<IDbConnectionFactory>(), typeof(Migration1000).Assembly);
+            var migrator = new Migrator(appHost.Resolve<IDbConnectionFactory>(), typeof(ConfigureDbMigrations).Assembly);
             AppTasks.Register("migrate", _ =>
             {
                 var log = appHost.GetApplicationServices().GetRequiredService<ILogger<ConfigureDbMigrations>>();
