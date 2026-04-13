@@ -68,7 +68,6 @@ Declarative APIs with automatic query and CRUD functionality:
 - **AutoQuery** - Queryable APIs with filtering, sorting, and pagination
 - **AutoQueryData** - In-memory queryable data sources
 - **Audit History** - Automatic tracking of data changes
-- **Bookings Example** - Complete CRUD example with role-based permissions
 
 ### 🎨 React 19 + shadcn/ui Components
 
@@ -101,16 +100,6 @@ Durable job processing with ServiceStack's Background Jobs:
 - **Recurring Jobs** - Scheduled task execution
 - **Job Dashboard** - Monitor jobs at `/admin-ui/jobs`
 - Uses monthly rolling Sqlite databases by default - [Upgrade to PostgreSQL/SQL Server/MySQL](#upgrading-to-enterprise-database)
-
-### 📝 MDX Blog
-
-Integrated markdown blog with:
-
-- **MDX Support** - Markdown with React components
-- **Syntax Highlighting** - Prism.js code blocks
-- **vite-plugin-press** - Static content generation
-- **Frontmatter** - YAML metadata for posts
-- **Typography Styling** - Beautiful prose with `@tailwindcss/typography`
 
 ### 📡 Request Logging
 
@@ -172,18 +161,14 @@ Built-in theme support:
 
 ## Example Pages
 
-| Page               | Description |
-|--------------------|-------------|
-| `/`                | Home page with getting started guide |
-| `/todomvc`         | TodoMVC example with ServiceStack APIs |
-| `/bookings-auto`   | AutoQueryGrid with automatic columns |
-| `/bookings-custom` | Custom booking form with validation |
-| `/admin`           | Protected admin page (requires Admin role) |
-| `/profile`         | User profile management |
-| `/blog`            | MDX blog listing |
-| `/shadcn-ui`       | shadcn/ui component showcase |
-| `/about`           | About page (MDX) |
-| `/privacy`         | Privacy policy page (MDX) |
+| Page        | Description |
+|-------------|-------------|
+| `/`         | Home page with getting started guide |
+| `/admin`    | Protected admin page (requires Admin role) |
+| `/profile`  | User profile management |
+| `/shadcn-ui`| shadcn/ui component showcase |
+| `/about`    | About page (MDX) |
+| `/privacy`  | Privacy policy page (MDX) |
 
 ## Admin UIs
 
@@ -216,12 +201,9 @@ MyApp.Client/                # Vite React SPA frontend
 └── vite.config.ts           # Vite configuration
 
 MyApp.ServiceInterface/      # Service implementations
-├── MyServices.cs            # Example services
 └── Data/                    # EF Core DbContext
 
 MyApp.ServiceModel/          # DTOs and service contracts
-├── Bookings.cs              # AutoQuery CRUD example
-└── Hello.cs                 # Example service contract
 
 MyApp.Tests/                 # Integration and unit tests
 
@@ -264,7 +246,7 @@ npm run migrate
 
 **OrmLite (for application data):**
 
-Create migration classes in `MyApp/Migrations/` following the pattern in `Migration1000.cs`.
+Create migration classes in `MyApp/Migrations/` using `npx okai init Table`.
 
 ### 4. Testing
 

@@ -128,7 +128,6 @@ MyApp.ServiceInterface/        # Service implementations
 └── *Services.cs               # ServiceStack service implementations
 
 MyApp.Tests/                   # .NET tests (NUnit)
-├── IntegrationTest.cs         # API integration tests
 └── MigrationTasks.cs          # Migration task runner
 
 config/
@@ -150,7 +149,6 @@ Both use the same SQLite database by default (`App_Data/app.db`). Connection str
 
 **Migration Files:**
 - `MyApp/Migrations/20240301000000_CreateIdentitySchema.cs` - EF Core migration for Identity
-- `MyApp/Migrations/Migration1000.cs` - OrmLite migration for app tables (e.g., Booking)
 
 Run `npm run migrate` to execute both.
 
@@ -159,23 +157,23 @@ Run `npm run migrate` to execute both.
 1. ASP.NET Core Identity handles user registration/login via Razor Pages at `/Identity/*` routes
 2. ServiceStack AuthFeature integrates with Identity via `IdentityAuth.For<ApplicationUser>()` in [Configure.Auth.cs](MyApp/Configure.Auth.cs)
 3. Custom claims added via `AdditionalUserClaimsPrincipalFactory` and `CustomUserSession`
-4. ServiceStack services use `[ValidateIsAuthenticated]` and `[ValidateHasRole]` attributes for authorization (see [Bookings.cs](MyApp.ServiceModel/Bookings.cs))
+4. ServiceStack services use `[ValidateIsAuthenticated]` and `[ValidateHasRole]` attributes for authorization
 
 ### ServiceStack .NET APIs
 
 ServiceStack APIs adopt a [DTOs-first approach utilizing message-based APIs](https://docs.servicestack.net/api-design). To create ServiceStack APIs create all related DTOs used in the API (aka Service Contracts) into a single file in the `MyApp.ServiceModel` project, e.g:
 
 ```csharp
-//MyApp.ServiceModel/Bookings.cs
+//MyApp.ServiceModel/Products.cs
 
-public class GetBooking : IGet, IReturn<GetBookingResponse>
+public class GetProduct : IGet, IReturn<GetProductResponse>
 {
     [ValidateGreaterThan(0)]
     public int Id { get; set; }
 }
-public class GetBookingResponse
+public class GetProductResponse
 {
-    public Booking? Result { get; set; }
+    public Product? Result { get; set; }
     public ResponseStatus? ResponseStatus { get; set; }
 }
 ```
@@ -200,9 +198,9 @@ The Type Validation Attributes below should be used to protect APIs:
 - `[ValidateApiKey]` - Only Users with a valid API Key
 
 ```csharp
-//MyApp.ServiceModel/Bookings.cs
+//MyApp.ServiceModel/Products.cs
 [ValidateHasRole("Employee")]
-public class CreateBooking : ICreateDb<Booking>, IReturn<IdResponse>
+public class CreateProduct : ICreateDb<Product>, IReturn<IdResponse>
 {
    //...
 }
@@ -217,19 +215,19 @@ APIs have a primary HTTP Method which if not specified uses HTTP **POST**. Use `
 ServiceStack API implementations should be added to `MyApp.ServiceInterface/`:
 
 ```csharp
-//MyApp.ServiceInterface/BookingServices.cs
-public class BookingServices(IAutoQueryDb autoquery) : Service
+//MyApp.ServiceInterface/ProductServices.cs
+public class ProductServices(IAutoQueryDb autoquery) : Service
 {
-    public object Any(GetBooking request)
+    public object Any(GetProduct request)
     {
-        return new GetBookingResponse {
-            Result = base.Db.SingleById<Booking>(request.Id)
-                ?? throw HttpError.NotFound("Booking does not exist")
+        return new GetProductResponse {
+            Result = base.Db.SingleById<Product>(request.Id)
+                ?? throw HttpError.NotFound("Product does not exist")
         };
     }
 
     // Example of overriding an AutoQuery API with a custom implementation 
-    public async Task<object> Any(QueryBookings request)
+    public async Task<object> Any(QueryProducts request)
     {
         using var db = autoQuery.GetDb(request, base.Request);
         var q = autoQuery.CreateQuery(request, base.Request, db);
@@ -247,12 +245,12 @@ A ServiceStack API typically returns the Response DTO defined in its Request DTO
 
 ### AutoQuery CRUD Pattern
 
-ServiceStack's AutoQuery generates full CRUD APIs from declarative request DTOs. Example in [Bookings.cs](MyApp.ServiceModel/Bookings.cs):
+ServiceStack's AutoQuery generates full CRUD APIs from declarative request DTOs. Example:
 
-- `QueryBookings : QueryDb<Booking>`   → GET    /api/QueryBookings with filtering/sorting/paging
-- `CreateBooking : ICreateDb<Booking>` → POST   /api/CreateBooking
-- `UpdateBooking : IPatchDb<Booking>`  → PATCH  /api/UpdateBooking
-- `DeleteBooking : IDeleteDb<Booking>` → DELETE /api/DeleteBooking
+- `QueryProducts : QueryDb<Product>`   → GET    /api/QueryProducts with filtering/sorting/paging
+- `CreateProduct : ICreateDb<Product>` → POST   /api/CreateProduct
+- `UpdateProduct : IPatchDb<Product>`  → PATCH  /api/UpdateProduct
+- `DeleteProduct : IDeleteDb<Product>` → DELETE /api/DeleteProduct
 
 **No service implementation required** - AutoQuery handles it. Audit fields (`CreatedBy`, `ModifiedBy`, etc.) auto-populated via `[AutoApply(Behavior.AuditCreate)]` attributes.
 
@@ -271,24 +269,24 @@ This calls ServiceStack's `/types/typescript` endpoint and updates `dtos.ts` wit
 
 The `npx okai` tool generates C# AutoQuery APIs and migrations from TypeScript data models (`.d.ts` files):
 
-1. **TypeScript data model** (`MyApp.ServiceModel/Bookings.d.ts`) defines the entity with decorators
-2. **C# AutoQuery APIs** (`MyApp.ServiceModel/Bookings.cs`) - auto-generated CRUD request/response DTOs
+1. **TypeScript data model** (`MyApp.ServiceModel/Table.d.ts`) defines the entity with decorators
+2. **C# AutoQuery APIs** (`MyApp.ServiceModel/Table.cs`) - auto-generated CRUD request/response DTOs
 3. **C# OrmLite migration** (`MyApp/Migrations/Migration1000.cs`) - auto-generated schema creation
 
-This enables rapid prototyping: edit the `.d.ts` model, run `npx okai Bookings.d.ts`, then `npm run migrate`.
+This enables rapid prototyping: edit the `.d.ts` model, run `npx okai Table.d.ts`, then `npm run migrate`.
 
-**Important:** The `.d.ts` files use special decorators (e.g., `@validateHasRole`, `@autoIncrement`) that map to C# attributes and .NET Types. The valid schema for these is defined in [api.d.ts](MyApp.ServiceModel/api.d.ts). Reference [Bookings.d.ts](MyApp.ServiceModel/Bookings.d.ts) for examples.
+**Important:** The `.d.ts` files use special decorators (e.g., `@validateHasRole`, `@autoIncrement`) that map to C# attributes and .NET Types. The valid schema for these is defined in [api.d.ts](MyApp.ServiceModel/api.d.ts).
 
 ### AutoQuery APIs
 
 [C# AutoQuery APIs](https://react-templates.net/docs/autoquery/querying) allow creating queryable C# APIs for RDBMS Tables with just a Request DTO definition, e.g:
 
 ```csharp
-public class QueryBookings : QueryDb<Booking>
+public class QueryProducts : QueryDb<Product>
 {
     public int? Id { get; set; }
-    public decimal? MinCost { get; set; }
-    public List<decimal>? CostBetween { get; set; }
+    public decimal? MinPrice { get; set; }
+    public List<decimal>? PriceBetween { get; set; }
     public List<int>? Ids { get; set; }
 }
 ```
@@ -347,34 +345,34 @@ Each convention key includes `%` wildcards to define where a DataModel field nam
 Properties that matches a DataModel field performs an exact query `{Field} = {Value}`, e.g:
 
 ```typescript
-const api = client.api(new QueryBookings({ id:1 }))
+const api = client.api(new QueryProducts({ id:1 }))
 ```
 
-As `MinCost` matches the `"Min%"` convention it applies the `Cost >= 100` filter to the query:
+As `MinPrice` matches the `"Min%"` convention it applies the `Price >= 100` filter to the query:
 
 ```typescript
-const api = client.api(new QueryBookings({ minCost:100 }))
+const api = client.api(new QueryProducts({ minPrice:100 }))
 ```
 
-As `CostBetween` matches the `"%Between%"` convention it applies the `Cost BETWEEN 100 AND 200` filter to the query:
+As `PriceBetween` matches the `"%Between%"` convention it applies the `Price BETWEEN 100 AND 200` filter to the query:
 
 ```typescript
-const api = client.api(new QueryBookings({ costBetween:[100,200] }))
+const api = client.api(new QueryProducts({ priceBetween:[100,200] }))
 ```
 
 AutoQuery also matches on pluralized fields where `Ids` matches `Id` and applies the `Id IN (1,2,3)` filter:
 
 ```typescript
-const api = client.api(new QueryBookings({ ids:[1,2,3] }))
+const api = client.api(new QueryProducts({ ids:[1,2,3] }))
 ```
 
 Multiple Request DTO properties applies multiple **AND** filters, e.g:
 
 ```typescript
-const api = client.api(new QueryBookings({ minCost:100, ids:[1,2,3] }))
+const api = client.api(new QueryProducts({ minPrice:100, ids:[1,2,3] }))
 ```
 
-Applies the `(Cost >= 100) AND (Id IN (1,2,3))` filter.
+Applies the `(Price >= 100) AND (Id IN (1,2,3))` filter.
 
 ## Key Conventions
 
@@ -384,25 +382,25 @@ Frontend code imports from `lib/gateway.ts`:
 
 ```typescript
 import { client } from '@/lib/gateway'
-import { QueryBookings } from '@/lib/dtos'
+import { QueryProducts } from '@/lib/dtos'
 
-const response = await client.api(new QueryBookings())
+const response = await client.api(new QueryProducts())
 ```
 
 The `client` is a configured `JsonServiceClient` pointing to `/api` (proxied to .NET backend).
 
-All .NET APIs are accessible by Request DTOs which implement either a `IReturn<ResponseType>` a `IReturnVoid` interface which defines the API Response, e.g:
+All .NET APIs are accessible by Request DTOs which implement either a `IReturn<ResponseType>` or `IReturnVoid` interface which defines the API Response, e.g:
 
 ```typescript
-export class Hello implements IReturn<HelloResponse>, IGet
+export class GetProduct implements IReturn<GetProductResponse>, IGet
 {
-    public name: string;
-    public constructor(init?: Partial<Hello>) { (Object as any).assign(this, init); }
+    public id: number;
+    public constructor(init?: Partial<GetProduct>) { (Object as any).assign(this, init); }
 }
-export class HelloResponse
+export class GetProductResponse
 {
-    public result: string;
-    public constructor(init?: Partial<HelloResponse>) { (Object as any).assign(this, init); }
+    public result: Product;
+    public constructor(init?: Partial<GetProductResponse>) { (Object as any).assign(this, init); }
 }
 ```
 
@@ -411,25 +409,23 @@ export class HelloResponse
 Inside a React Component use `useClient()` to resolve a Service Client. The `ApiResult` can hold **loading**, **failed** and **successful** API Response states, e.g:
 
 ```typescript
-type Props = { value: string }
-export default ({ value }:Props) => {
-    const [name, setName] = useState(value)
+type Props = { id: number }
+export default ({ id }:Props) => {
     const client = useClient()
-    const [api, setApi] = useState<ApiResult<HelloResponse>>(new ApiResult())
+    const [api, setApi] = useState<ApiResult<GetProductResponse>>(new ApiResult())
     
     useEffect(() => {
         (async () => {
             setApi(new ApiResult())
-            setApi(await client.api(new Hello({ name })))
+            setApi(await client.api(new GetProduct({ id })))
         })()
-    }, [name])
+    }, [id])
 
     return (<div>
-        <TextInput id="name" label="API Example" value={name} onChange={setName} />
         {api.error
             ? <div className="text-red-500">{api.error.message}</div>
             : api.succeeded 
-                ? <div className="text-gray-900">{api.response.result}</div>
+                ? <div className="text-gray-900">{api.response.result?.name}</div>
                 : <div>loading...</div>}
     </div>)
 }
@@ -442,7 +438,7 @@ The examples below show typical usage:
 The `api` and `apiVoid` APIs return an `ApiResult<Response>` which holds both successful and failed API Responses:
 
 ```typescript
-const api = await client.api(new Hello({ name }))
+const api = await client.api(new GetProduct({ id }))
 if (api.succeeded) {
     console.log(`The API succeeded:`, api.response)
 } else if (api.error) {
@@ -476,14 +472,14 @@ The `<AutoForm>` Component can be used to render an API validation bound form fo
 import { AutoForm, AutoCreateForm, AutoEditForm, HtmlFormat } from '@servicestack/react'
 
 function GenericFormExample() {
-  const [results, setResults] = useState<Booking[]|undefined>()
+  const [results, setResults] = useState<Product[]|undefined>()
 
-  const onSuccess = (response:QueryResponse<Booking>) => {
+  const onSuccess = (response:QueryResponse<Product>) => {
     setResults(response.results)
   }
 
   return (
-   <AutoForm panelClass="mx-auto max-w-3xl" type="QueryBookings" onSuccess={onSuccess} />
+   <AutoForm panelClass="mx-auto max-w-3xl" type="QueryProducts" onSuccess={onSuccess} />
    {results && <HtmlFormat value={results} />}
   )
 }
@@ -492,20 +488,18 @@ function GenericFormExample() {
 The `<AutoCreateForm>` can be used with an AutoQuery CRUD `ICreateDb<T>` DTO to render a create entity form.
 
 ```jsx
-<AutoCreateForm type="CreateBooking" formStyle="card" />
+<AutoCreateForm type="CreateProduct" formStyle="card" />
 ```
 
 The `<AutoEditForm>` can be used with an AutoQuery CRUD `IPatchDb<T>` or `IUpdateDb<T>` DTO to render an update form.
 The `deleteType` can be set to use an `IDeleteDb<T>` DTO to enable delete functionality.
 ```jsx
-function EditFormExample({ booking }:{ Booking:booking }) {
+function EditFormExample({ product }:{ product:Product }) {
    return (
       <AutoEditForm
-         value={booking}
-         type="UpdateBooking"
-         deleteType="DeleteBooking"
-         heading="Change an existing Room Booking"
-         subHeading="Manage reservations for MyApp hotels."
+         value={product}
+         type="UpdateProduct"
+         deleteType="DeleteProduct"
          formStyle="card"
       />)
 }
